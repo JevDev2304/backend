@@ -5,7 +5,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: 'https://frontend-bx19ohve6-juan-esteban-valdes-projects.vercel.app', // Replace with your frontend's actual URL
+    origin: 'https://frontend-lgmxdzp2d-juan-esteban-valdes-projects.vercel.app/', // Replace with your frontend's actual URL
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allowed HTTP methods
     credentials: true, // Allow cookies to be sent
   });
