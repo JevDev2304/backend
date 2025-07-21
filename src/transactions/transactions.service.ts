@@ -34,8 +34,6 @@ export class TransactionsService {
       if (!product) {
         throw new NotFoundException(`Product with id ${dto.productId} not found`);
       }
-
-      // Buscar o crear cliente
       let customer = await this.transactionsRepository.findCustomerByEmail(dto.customer.email);
       if (customer) {
         customer.fullname = dto.customer.fullname;
@@ -43,12 +41,8 @@ export class TransactionsService {
         customer = this.transactionsRepository.createCustomer(dto.customer);
       }
       customer = await this.transactionsRepository.saveCustomer(customer);
-
-      // Calcular precio
       const delivery_price = 10000;
       const price = Number(product.price) * dto.quantityPurchased + delivery_price;
-
-      // Tokenizar tarjeta
       let tokenize_card: string;
       try {
         tokenize_card = await this.wompiService.tokenizeCard({
@@ -61,8 +55,6 @@ export class TransactionsService {
       } catch {
         throw new BadRequestException('Failed to tokenize card. Please verify your card details.');
       }
-
-      // Crear transacción en Wompi
       const reference = `TX-${Date.now()}`;
       let wompi_transaction_id: string;
       try {
@@ -82,8 +74,6 @@ export class TransactionsService {
       } catch {
         throw new BadRequestException('Failed to create transaction in Wompi. Please try again.');
       }
-
-      // Crear transacción en base de datos
       let transaction = this.transactionsRepository.createTransaction({
         quantity_purchased: dto.quantityPurchased,
         state: 'PENDING',
@@ -92,15 +82,11 @@ export class TransactionsService {
         customer
       });
       transaction = await this.transactionsRepository.saveTransaction(transaction);
-
-      // Crear entrega
       const delivery = this.transactionsRepository.createDelivery({
         ...dto.deliveryDetails,
         transaction
       });
       await this.transactionsRepository.saveDelivery(delivery);
-
-      // Verificar estado de la transacción
       let wompiStatus: string;
       try {
         const status = await this.wompiService.pollTransactionStatus({
@@ -111,16 +97,14 @@ export class TransactionsService {
         wompiStatus = 'UNKNOWN';
       }
 
-      // Actualizar estado de la transacción y stock del producto
       if (wompiStatus === 'APPROVED') {
-        transaction.state = 'Approved';
-        // LÍNEA CORREGIDA: Guardar la transacción con su nuevo estado
+        transaction.state = 'APPROVED';
         await this.transactionsRepository.saveTransaction(transaction);
         
         product.quantity = product.quantity - dto.quantityPurchased;
         await this.transactionsRepository.saveProduct(product);
       } else {
-        transaction.state = 'Denied';
+        transaction.state = 'DENIED';
         await this.transactionsRepository.saveTransaction(transaction);
         throw new BadRequestException('The transaction was denied by Wompi. Please try with another credit card.');
       }
@@ -141,8 +125,6 @@ export class TransactionsService {
       console.error('Transaction Error:', error);
 
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
-        // En lugar de devolver un objeto, relanzamos la excepción para que sea manejada por un filtro de excepciones global si existe.
-        // O si la intención es siempre devolver un objeto, esto está bien. Por ahora lo dejamos como estaba.
         return { success: false, message: error.message };
       }
       throw new InternalServerErrorException(
