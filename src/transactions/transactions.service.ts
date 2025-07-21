@@ -114,6 +114,9 @@ export class TransactionsService {
       // Actualizar estado de la transacción y stock del producto
       if (wompiStatus === 'APPROVED') {
         transaction.state = 'Approved';
+        // LÍNEA CORREGIDA: Guardar la transacción con su nuevo estado
+        await this.transactionsRepository.saveTransaction(transaction);
+        
         product.quantity = product.quantity - dto.quantityPurchased;
         await this.transactionsRepository.saveProduct(product);
       } else {
@@ -121,6 +124,7 @@ export class TransactionsService {
         await this.transactionsRepository.saveTransaction(transaction);
         throw new BadRequestException('The transaction was denied by Wompi. Please try with another credit card.');
       }
+      
       return {
         success: true,
         message: 'Transaction created successfully',
@@ -137,6 +141,8 @@ export class TransactionsService {
       console.error('Transaction Error:', error);
 
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        // En lugar de devolver un objeto, relanzamos la excepción para que sea manejada por un filtro de excepciones global si existe.
+        // O si la intención es siempre devolver un objeto, esto está bien. Por ahora lo dejamos como estaba.
         return { success: false, message: error.message };
       }
       throw new InternalServerErrorException(
