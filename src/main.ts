@@ -1,27 +1,37 @@
+// src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Lista de URLs exactas permitidas
+  const allowedOrigins = [
+    'https://frontend-murex-one-49.vercel.app', // Tu URL de producción fija
+    'http://localhost:5173',                   // Para desarrollo local
+  ];
+  
+  // Expresión regular para cualquier otro despliegue de Vercel
+  const allowedOriginsRegex = /^https:\/\/frontend-.*\.vercel\.app$/;
+
   app.enableCors({
-    // La corrección clave está aquí: sin comillas
-    origin: /https:\/\/frontend-.*-juan-esteban-valdes-projects\.vercel\.app$/,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: function (origin, callback) {
+      if (!origin) {
+        return callback(null, true);
+      }
+      
+      // Comprueba si el origen está en la lista fija O si coincide con la regex
+      if (allowedOrigins.includes(origin) || allowedOriginsRegex.test(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   });
 
-  const config = new DocumentBuilder()
-    .setTitle('Backend API')
-    .setDescription('This is the Backend API of the Juan Esteban Valdés Ospina Tech test')
-    .setVersion('1.0')
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
-
-  // Asegúrate de escuchar en '0.0.0.0' para Render
+  // ... tu código de Swagger ...
+  
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();
