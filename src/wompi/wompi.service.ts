@@ -93,6 +93,31 @@ export class WompiService {
     return false;
   }
 
+  // Dentro de la clase WompiService
+
+async getAcceptanceDetails(): Promise<any> {
+  if (!this.publicKey) {
+    this.logger.error('WOMPI_PUBLIC_KEY is not defined.');
+    throw new Error('Wompi public key is not configured.');
+  }
+
+  try {
+    const response = await this.http.get(`/merchants/${this.publicKey}`);
+    const { data } = response.data;
+
+    this.logger.log('Wompi acceptance data fetched successfully.');
+    return {
+      privacyPolicy: data.presigned_acceptance.permalink,
+      privacyPolicyToken: data.presigned_acceptance.acceptance_token,
+      personalDataAuth: data.presigned_personal_data_auth.permalink,
+      personalDataAuthToken: data.presigned_personal_data_auth.acceptance_token,
+    };
+  } catch (error) {
+    this.logger.error('Failed to fetch Wompi acceptance data:', error.stack);
+    throw new Error('Could not retrieve Wompi acceptance details.');
+  }
+}
+
   generateSignature(reference: string, amountInCents: number, currency: string): string {
     const payload = `${reference}${amountInCents}${currency}${this.integrationKey}`;
     return crypto.createHash('sha256').update(payload).digest('hex');
