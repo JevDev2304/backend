@@ -1,6 +1,7 @@
  // src/products/entities/product.entity.ts
-import { Entity, PrimaryColumn, Column } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger'; // Import ApiProperty
+import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
+import { Transaction } from '../transactions/transactions.entity';// Import ApiProperty
 
 @Entity('products')
 export class Product {
@@ -27,4 +28,8 @@ export class Product {
   @ApiProperty({ description: 'URL to the product image', example: 'https://example.com/images/widget.jpg' })
   @Column()
   image: string;
+  @ApiProperty({ type: () => [Transaction], description: 'List of transactions for this product' })
+  @OneToMany(() => Transaction, (transaction) => transaction.product)
+  transactions: Transaction[];
+
 }

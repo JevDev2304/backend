@@ -8,9 +8,9 @@ import { Product } from './products.entity';
 export class ProductsRepository {
   constructor(
     @InjectRepository(Product)
-    private readonly productoRepository: Repository<Product>,
+    private readonly productRepository: Repository<Product>,
   ) {}
   async findAll(): Promise<Product[]> {
-    return this.productoRepository.find();
+    return this.productRepository.find();
   }
 }
