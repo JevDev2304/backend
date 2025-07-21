@@ -4,21 +4,24 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   app.enableCors({
-    origin: '/https:\/\/frontend-.*-juan-esteban-valdes-projects\.vercel\.app$/', // Replace with your frontend's actual URL
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allowed HTTP methods
-    credentials: true, // Allow cookies to be sent
+    // La corrección clave está aquí: sin comillas
+    origin: /https:\/\/frontend-.*-juan-esteban-valdes-projects\.vercel\.app$/,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
   });
+
   const config = new DocumentBuilder()
-  .setTitle('Backend API') // Your API Title
-  .setDescription('This is the Backend API of the Juan Esteban Valdés Ospina Tech test') // Your API Description
-  .setVersion('1.0') // Your API Version // Optional: Adds a tag to group endpoints in Swagger UI
-  .build();
+    .setTitle('Backend API')
+    .setDescription('This is the Backend API of the Juan Esteban Valdés Ospina Tech test')
+    .setVersion('1.0')
+    .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document); 
+  SwaggerModule.setup('docs', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
-
+  // Asegúrate de escuchar en '0.0.0.0' para Render
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();
